@@ -1,63 +1,96 @@
 {
-module Lexer (lexTokens) where
-import Tokens
+module Lexer (Token(..), lexTokens) where
+import Data.Char (ord)
 }
 
 %wrapper "basic"
 
-$white   = [\x20\x09\x0D\x0A]+       -- espacio, tab, CR, LF
-$digit   = [0-9]
-$idStart = [A-Za-z_]
-$idCont  = [A-Za-z0-9_\-\?\!]
+-- Blancos robustos: espacio, tab, LF, CR, FF, VT
+$ws      = [\x20\x09\x0A\x0D\x0C\x0B]
+$digit   = 0-9
+$alpha   = [A-Za-z_]
+$idrest  = [A-Za-z0-9_\-\?\!]
 
-@int    = \-?$digit+
-@ident  = $idStart$idCont*
+-- literales útiles
+@int     = \-?$digit+
+@ident   = $alpha$idrest*
 
 tokens :-
 
-$white                       ;
-"("                          { \_ -> TLParen }
-")"                          { \_ -> TRParen }
-"["                          { \_ -> TLBracket }
-"]"                          { \_ -> TRBracket }
-","                          { \_ -> TComma }
+-- Ignorar espacios y comentarios tipo Lisp: ; ... hasta fin de línea
+$ws+                         ;
+";" [^\x0A\x0D]*             ;
 
-"lambda"                     { \_ -> TLambda }
-"if"                         { \_ -> TIf }
-"if0"                        { \_ -> TIf0 }
-"letrec"                     { \_ -> TLetRec }
-"let*"                       { \_ -> TLetStar }
-"let"                        { \_ -> TLet }
-"cond"                       { \_ -> TCond }
-"else"                       { \_ -> TElse }
-"fst"                        { \_ -> TFst }
-"snd"                        { \_ -> TSnd }
-"head"                       { \_ -> THead }
-"tail"                       { \_ -> TTail }
+-- Delimitadores y separadores
+"("                          { \_ -> TokLP     }
+")"                          { \_ -> TokRP     }
+"["                          { \_ -> TokLB     }
+"]"                          { \_ -> TokRB     }
+","                          { \_ -> TokComma  }
 
-"+"                          { \_ -> TOpPlus }
-"-"                          { \_ -> TOpMinus }
-"*"                          { \_ -> TOpMul }
-"/"                          { \_ -> TOpDiv }
-"add1"                       { \_ -> TOpAdd1 }
-"sub1"                       { \_ -> TOpSub1 }
-"sqrt"                       { \_ -> TOpSqrt }
-"expt"                       { \_ -> TOpExpt }
-"="                          { \_ -> TEq }
-"!="                         { \_ -> TNe }
-"<="                         { \_ -> TLe }
-">="                         { \_ -> TGe }
-"<"                          { \_ -> TLt }
-">"                          { \_ -> TGt }
-"not"                        { \_ -> TNot }
+-- Palabras clave / especiales
+"lambda"                     { \_ -> TokLambda }
+"if"                         { \_ -> TokIf     }
+"if0"                        { \_ -> TokIf0    }
+"let"                        { \_ -> TokLet    }
+"letrec"                     { \_ -> TokLetRec }
+"let*"                       { \_ -> TokLetStar}
+"cond"                       { \_ -> TokCond   }
+"else"                       { \_ -> TokElse   }
+"fst"                        { \_ -> TokFst    }
+"snd"                        { \_ -> TokSnd    }
+"head"                       { \_ -> TokHead   }
+"tail"                       { \_ -> TokTail   }
 
-"#t"                         { \_ -> TTrue }
-"#f"                         { \_ -> TFalse }
+-- Operadores
+"+"                          { \_ -> TokPlus   }
+"-"                          { \_ -> TokMinus  }
+"*"                          { \_ -> TokMul    }
+"/"                          { \_ -> TokDiv    }
+"add1"                       { \_ -> TokAdd1   }
+"sub1"                       { \_ -> TokSub1   }
+"sqrt"                       { \_ -> TokSqrt   }
+"expt"                       { \_ -> TokExpt   }
+"="                          { \_ -> TokEq     }
+"!="                         { \_ -> TokNe     }
+"<="                         { \_ -> TokLe     }
+">="                         { \_ -> TokGe     }
+"<"                          { \_ -> TokLt     }
+">"                          { \_ -> TokGt     }
+"not"                        { \_ -> TokNot    }
 
-@int                         { \s -> TInt (read s) }
-@ident                       { \s -> TIdent s }
+-- Booleanos
+"#t"                         { \_ -> TokTrue   }
+"#f"                         { \_ -> TokFalse  }
+
+-- Literales e identificadores
+@int                         { \s -> TokInt   (read s) }
+@ident                       { \s -> TokIdent s       }
+
+-- Cualquier otro símbolo: error léxico
+.                            { \s -> lexPanic s }
 
 {
+-- === Definición de tokens (nombres distintos a tu ejemplo) ===
+data Token
+  = TokLP | TokRP | TokLB | TokRB | TokComma
+  | TokLambda | TokIf | TokIf0
+  | TokLet | TokLetRec | TokLetStar | TokCond | TokElse
+  | TokFst | TokSnd | TokHead | TokTail
+  | TokPlus | TokMinus | TokMul | TokDiv
+  | TokAdd1 | TokSub1 | TokSqrt | TokExpt
+  | TokEq | TokLt | TokGt | TokLe | TokGe | TokNe | TokNot
+  | TokTrue | TokFalse
+  | TokInt Integer
+  | TokIdent String
+  deriving (Eq, Show)
+
+-- Alex expone alexScanTokens :: String -> [Token]
 lexTokens :: String -> [Token]
 lexTokens = alexScanTokens
+
+lexPanic :: String -> a
+lexPanic s =
+  error $ "Lexer: carácter no reconocido: " ++ show s
+       ++ " (codepoints=" ++ show (map ord s) ++ ")"
 }
