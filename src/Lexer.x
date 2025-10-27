@@ -16,7 +16,7 @@ $idrest  = [A-Za-z0-9_\-\?\!]
 @ident   = $alpha$idrest*
 
 tokens :-
-
+    
 -- Ignorar espacios y comentarios tipo Lisp: ; ... hasta fin de línea
 $ws+                         ;
 ";" [^\x0A\x0D]*             ;
