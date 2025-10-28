@@ -3,9 +3,10 @@
 {-# OPTIONS_GHC -fno-warn-unused-binds #-}
 {-# OPTIONS_GHC -fno-warn-unused-imports #-}
 {-# LANGUAGE CPP #-}
-{-# LINE 1 "src/Lexer.x" #-}
+{-# LINE 1 "Lexer.x" #-}
 module Lexer (Token(..), lexTokens) where
 import Data.Char (ord)
+import Data.Array (Array, listArray, (!), bounds)
 #include "ghcconfig.h"
 import qualified Data.Array
 #define ALEX_BASIC 1
@@ -14423,7 +14424,7 @@ alexRightContext IBOX(sc) user__ _ _ input__ =
         -- match when checking the right context, just
         -- the first match will do.
 #endif
-{-# LINE 73 "src/Lexer.x" #-}
+{-# LINE 74 "Lexer.x" #-}
 -- === Definición de tokens (nombres distintos a tu ejemplo) ===
 data Token
   = TokLP | TokRP | TokLB | TokRB | TokComma

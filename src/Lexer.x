@@ -1,6 +1,7 @@
 {
 module Lexer (Token(..), lexTokens) where
 import Data.Char (ord)
+import Data.Array (Array, listArray, (!), bounds)
 }
 
 %wrapper "basic"
@@ -16,7 +17,7 @@ $idrest  = [A-Za-z0-9_\-\?\!]
 @ident   = $alpha$idrest*
 
 tokens :-
-    
+
 -- Ignorar espacios y comentarios tipo Lisp: ; ... hasta fin de línea
 $ws+                         ;
 ";" [^\x0A\x0D]*             ;
